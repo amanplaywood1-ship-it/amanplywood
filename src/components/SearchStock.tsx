@@ -169,18 +169,18 @@ export function SearchStock({ initialQuery = "" }: { initialQuery?: string }) {
       )}
 
       {items.length > 1 && !selected && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-sm text-blue-800/80">Multiple matches — pick one:</p>
-          <ul className="max-h-60 space-y-1 overflow-y-auto rounded-xl border border-blue-100/90 bg-white p-1.5 shadow-[0_4px_20px_-8px_rgba(30,58,138,0.12)] ring-1 ring-blue-950/[0.03]">
+          <ul className="space-y-2">
             {items.map((item) => (
               <li key={item.id}>
                 <button
                   type="button"
                   onClick={() => pickItem(item)}
-                  className="flex w-full flex-col rounded-lg px-3 py-2 text-left text-sm transition hover:bg-blue-50"
+                  className="flex w-full flex-col rounded-xl border border-blue-100/90 bg-white px-4 py-3 text-left text-sm shadow-sm ring-1 ring-blue-950/[0.03] transition hover:bg-blue-50 hover:border-blue-200"
                 >
                   <span className="font-semibold text-blue-950">{item.searchKey}</span>
-                  <span className="truncate text-blue-800/80">{item.name}</span>
+                  <span className="text-blue-800/80">{item.name}</span>
                   <span className="text-blue-800/90">
                     Added {item.added} · Sold {item.outward} · Left {item.closing}
                   </span>
