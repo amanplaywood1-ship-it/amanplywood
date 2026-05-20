@@ -124,10 +124,10 @@ export function SearchStock({ initialQuery = "" }: { initialQuery?: string }) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-md space-y-6 px-4 py-8 sm:max-w-lg sm:px-6">
-      <section className="rounded-2xl border border-blue-100/90 bg-white p-5 shadow-[0_4px_24px_-10px_rgba(30,58,138,0.12)] ring-1 ring-blue-950/[0.03] sm:p-6">
+    <div className="mx-auto w-full max-w-full min-w-0 space-y-6 px-4 py-6 sm:max-w-lg sm:px-6 sm:py-8">
+      <section className="rounded-2xl border border-blue-100/90 bg-white p-4 shadow-[0_4px_24px_-10px_rgba(30,58,138,0.12)] ring-1 ring-blue-950/[0.03] sm:p-6">
         <div className="space-y-2">
-          <label htmlFor="q" className="flex items-baseline gap-2 text-sm font-semibold text-blue-950">
+          <label htmlFor="q" className="flex flex-wrap items-baseline gap-2 text-sm font-semibold text-blue-950">
             <span
               className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-blue-600 text-[11px] font-bold text-white shadow-sm"
               aria-hidden
@@ -136,8 +136,10 @@ export function SearchStock({ initialQuery = "" }: { initialQuery?: string }) {
             </span>
             Code + series
           </label>
-          <p className="text-xs text-blue-700/85">Example: 2257FW — code and series together, no space.</p>
-          <div className="flex gap-2 pt-1">
+          <p className="text-xs leading-relaxed text-blue-700/85">
+            Example: 2257FW — code and series together, no space.
+          </p>
+          <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-stretch sm:gap-2">
             <input
               id="q"
               type="search"
@@ -150,17 +152,17 @@ export function SearchStock({ initialQuery = "" }: { initialQuery?: string }) {
               onKeyDown={(e) => {
                 if (e.key === "Enter") void search();
               }}
-              className="min-w-0 flex-1 rounded-xl border-2 border-blue-200 bg-white px-4 py-3 text-base text-blue-950 shadow-inner outline-none placeholder:text-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="min-h-12 min-w-0 w-full rounded-xl border-2 border-blue-200 bg-white px-4 py-3 text-base text-blue-950 shadow-inner outline-none placeholder:text-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
             />
             <button
               type="button"
               onClick={() => void search()}
               disabled={loading || !query.trim()}
-              className="shrink-0 rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-blue-900/20 transition hover:from-blue-500 hover:to-blue-600 disabled:opacity-50"
+              className="min-h-12 w-full shrink-0 rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-blue-900/20 transition hover:from-blue-500 hover:to-blue-600 disabled:opacity-50 sm:w-auto sm:min-w-[7.5rem]"
             >
               {loading ? "…" : "Search"}
             </button>
-        </div>
+          </div>
         </div>
       </section>
 
@@ -177,10 +179,10 @@ export function SearchStock({ initialQuery = "" }: { initialQuery?: string }) {
                 <button
                   type="button"
                   onClick={() => pickItem(item)}
-                  className="flex w-full flex-col rounded-xl border border-blue-100/90 bg-white px-4 py-3 text-left text-sm shadow-sm ring-1 ring-blue-950/[0.03] transition hover:bg-blue-50 hover:border-blue-200"
+                  className="flex w-full min-w-0 flex-col gap-1 rounded-xl border border-blue-100/90 bg-white px-4 py-3 text-left text-sm shadow-sm ring-1 ring-blue-950/[0.03] transition hover:bg-blue-50 hover:border-blue-200 active:bg-blue-50"
                 >
-                  <span className="font-semibold text-blue-950">{item.searchKey}</span>
-                  <span className="text-blue-800/80">{item.name}</span>
+                  <span className="break-all font-semibold text-blue-950">{item.searchKey}</span>
+                  <span className="break-words text-blue-800/80">{item.name}</span>
                   <span className="text-blue-800/90">
                     Added {item.added} · Sold {item.outward} · Left {item.closing}
                   </span>
@@ -196,13 +198,19 @@ export function SearchStock({ initialQuery = "" }: { initialQuery?: string }) {
       )}
 
       {selected && (
-        <article className="space-y-5 rounded-2xl border border-blue-100/90 bg-white p-5 shadow-[0_8px_32px_-12px_rgba(30,58,138,0.15)] ring-1 ring-blue-950/[0.04] sm:p-6">
-          <div>
-            <h2 className="text-lg font-semibold leading-snug text-blue-950">{selected.name}</h2>
-            <p className="mt-1 text-sm text-blue-800/90">
-              Code <span className="font-mono font-semibold text-blue-950">{selected.code}</span>
-              {" · "}
-              Series <span className="font-mono font-semibold text-blue-950">{selected.series}</span>
+        <article className="space-y-5 rounded-2xl border border-blue-100/90 bg-white p-4 shadow-[0_8px_32px_-12px_rgba(30,58,138,0.15)] ring-1 ring-blue-950/[0.04] sm:p-6">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold leading-snug text-blue-950 break-words sm:text-lg">{selected.name}</h2>
+            <p className="mt-1 flex flex-wrap gap-x-1 gap-y-0.5 text-sm text-blue-800/90">
+              <span>
+                Code <span className="font-mono font-semibold text-blue-950 break-all">{selected.code}</span>
+              </span>
+              <span className="text-blue-400" aria-hidden>
+                ·
+              </span>
+              <span>
+                Series <span className="font-mono font-semibold text-blue-950 break-all">{selected.series}</span>
+              </span>
             </p>
             {selected.rackNo && <p className="mt-1 text-sm text-blue-700/80">Rack: {selected.rackNo}</p>}
           </div>
