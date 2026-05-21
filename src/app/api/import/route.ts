@@ -5,7 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 function isXlsxFile(file: File): boolean {
   const n = file.name.toLowerCase();
-  return n.endsWith(".xlsx") || n.endsWith(".xls") || file.type.includes("spreadsheet");
+  if (n.endsWith(".xlsx") || n.endsWith(".xls")) return true;
+  const t = (file.type ?? "").toLowerCase();
+  return t.includes("spreadsheet") || t.includes("excel") || t === "application/vnd.ms-excel";
 }
 
 export async function POST(request: NextRequest) {
