@@ -179,6 +179,13 @@ export async function adjustStock(
   return rowToItem(updated as InventoryItemRow);
 }
 
+export async function deleteInventoryItemById(id: string): Promise<void> {
+  const supabase = createServerSupabase();
+  const { error, count } = await supabase.from(TABLE).delete({ count: "exact" }).eq("id", id);
+  if (error) dbError("deleteInventoryItemById", error);
+  if (!count) throw new Error("NOT_FOUND");
+}
+
 export async function deleteAllInventory(): Promise<void> {
   const supabase = createServerSupabase();
   const { error } = await supabase

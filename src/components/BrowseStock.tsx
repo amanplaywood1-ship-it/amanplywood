@@ -11,6 +11,7 @@ export function BrowseStock() {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<StockItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -68,6 +69,28 @@ export function BrowseStock() {
     setActiveTag(null);
     setItems([]);
     setError(null);
+  };
+
+  const deleteItem = async (item: StockItem) => {
+    const label = item.searchKey || `${item.code}${item.series}`;
+    if (!window.confirm(`Delete ${label} from inventory? This cannot be undone.`)) {
+      return;
+    }
+
+    setError(null);
+    setDeletingId(item.id);
+    try {
+      const res = await fetch(`/api/inventory?id=${encodeURIComponent(item.id)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Delete failed");
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -188,7 +211,7 @@ export function BrowseStock() {
       {items.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-blue-100/90 bg-white shadow-[0_4px_24px_-10px_rgba(30,58,138,0.12)] ring-1 ring-blue-950/[0.03]">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
+            <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-blue-100 bg-blue-50/80">
                   <th className="whitespace-nowrap px-3 py-3 text-xs font-semibold uppercase tracking-wide text-blue-800">
@@ -252,12 +275,22 @@ export function BrowseStock() {
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-blue-700/80">{item.rackNo ?? "—"}</td>
                     <td className="whitespace-nowrap px-3 py-2.5">
-                      <Link
-                        href={`/?q=${encodeURIComponent(item.searchKey)}`}
-                        className="inline-flex rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800 transition hover:bg-blue-100"
-                      >
-                        Add / sell
-                      </Link>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Link
+                          href={`/?q=${encodeURIComponent(item.searchKey)}`}
+                          className="inline-flex rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800 transition hover:bg-blue-100"
+                        >
+                          Add / sell
+                        </Link>
+                        <button
+                          type="button"
+                          disabled={deletingId === item.id}
+                          onClick={() => void deleteItem(item)}
+                          className="inline-flex rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                        >
+                          {deletingId === item.id ? "…" : "Delete"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
