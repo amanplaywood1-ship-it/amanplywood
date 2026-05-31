@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 export type StockItem = {
   id: string;
   name: string;
-  code: string;
   series: string;
   searchKey: string;
   opening: number;
@@ -134,10 +133,10 @@ export function SearchStock({ initialQuery = "" }: { initialQuery?: string }) {
             >
               #
             </span>
-            Code + series
+            Series
           </label>
           <p className="text-xs leading-relaxed text-blue-700/85">
-            Example: 2257FW — code and series together, no space.
+            Example: 2257FW — enter the full series value, no spaces.
           </p>
           <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-stretch sm:gap-2">
             <input
@@ -201,16 +200,9 @@ export function SearchStock({ initialQuery = "" }: { initialQuery?: string }) {
         <article className="space-y-5 rounded-2xl border border-blue-100/90 bg-white p-4 shadow-[0_8px_32px_-12px_rgba(30,58,138,0.15)] ring-1 ring-blue-950/[0.04] sm:p-6">
           <div className="min-w-0">
             <h2 className="text-base font-semibold leading-snug text-blue-950 break-words sm:text-lg">{selected.name}</h2>
-            <p className="mt-1 flex flex-wrap gap-x-1 gap-y-0.5 text-sm text-blue-800/90">
-              <span>
-                Code <span className="font-mono font-semibold text-blue-950 break-all">{selected.code}</span>
-              </span>
-              <span className="text-blue-400" aria-hidden>
-                ·
-              </span>
-              <span>
-                Series <span className="font-mono font-semibold text-blue-950 break-all">{selected.series}</span>
-              </span>
+            <p className="mt-1 text-sm text-blue-800/90">
+              Series{" "}
+              <span className="font-mono font-semibold text-blue-950 break-all">{selected.series}</span>
             </p>
             {selected.rackNo && <p className="mt-1 text-sm text-blue-700/80">Rack: {selected.rackNo}</p>}
           </div>

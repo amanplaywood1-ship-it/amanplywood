@@ -3,7 +3,6 @@ import { makeSearchKey, parseIntSafe } from "@/lib/inventory";
 
 export type ImportRow = {
   name: string;
-  code: string;
   series: string;
   opening: number;
   outward: number;
@@ -30,8 +29,8 @@ function canonicalKey(h: string): string | null {
     category: "name",
     title: "name",
     product: "name",
-    code: "code",
     series: "series",
+    code: "code",
     opening: "opening",
     outward: "outward",
     current: "outward",
@@ -68,6 +67,18 @@ function normalizeRecord(raw: Record<string, string>): Record<string, string> {
   return out;
 }
 
+/** Legacy sheets may still have a separate code column — fold into series once. */
+export function resolveSeries(r: Record<string, string>): string {
+  const series = String(r.series ?? "").trim();
+  const legacyCode = String(r.code ?? "").trim();
+  if (!legacyCode) return series;
+  if (!series) return legacyCode;
+  const combined = `${legacyCode}${series}`;
+  if (makeSearchKey(series) === makeSearchKey(combined)) return series;
+  if (makeSearchKey(combined).endsWith(makeSearchKey(series))) return combined;
+  return series || combined;
+}
+
 export function parseInventoryCsv(text: string): ImportRow[] {
   const records = parse(text, {
     columns: true,
@@ -79,7 +90,8 @@ export function parseInventoryCsv(text: string): ImportRow[] {
   const rows: ImportRow[] = [];
   for (const raw of records) {
     const r = normalizeRecord(raw);
-    if (!r.name || !r.code || !r.series) continue;
+    const series = resolveSeries(r);
+    if (!r.name || !series) continue;
 
     const opening = parseIntSafe(r.opening, 0);
     const outward = parseIntSafe(r.outward, 0);
@@ -90,8 +102,7 @@ export function parseInventoryCsv(text: string): ImportRow[] {
 
     rows.push({
       name: r.name,
-      code: r.code,
-      series: r.series,
+      series,
       opening,
       outward,
       closing,
@@ -110,15 +121,14 @@ export function parseInventoryCsv(text: string): ImportRow[] {
 export function rowsToInventoryData(rows: ImportRow[]) {
   const byKey = new Map<string, ImportRow>();
   for (const row of rows) {
-    const searchKey = makeSearchKey(row.code, row.series);
+    const searchKey = makeSearchKey(row.series);
     byKey.set(searchKey, { ...row, serialNo: row.serialNo ?? null });
   }
 
   return [...byKey.values()].map((row) => ({
     name: row.name,
-    code: row.code.trim(),
     series: row.series.trim(),
-    searchKey: makeSearchKey(row.code, row.series),
+    searchKey: makeSearchKey(row.series),
     opening: row.opening,
     added: row.opening,
     outward: row.outward,

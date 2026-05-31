@@ -72,7 +72,7 @@ export function BrowseStock() {
   };
 
   const deleteItem = async (item: StockItem) => {
-    const label = item.searchKey || `${item.code}${item.series}`;
+    const label = item.searchKey || item.series;
     if (!window.confirm(`Delete ${label} from inventory? This cannot be undone.`)) {
       return;
     }
@@ -211,12 +211,9 @@ export function BrowseStock() {
       {items.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-blue-100/90 bg-white shadow-[0_4px_24px_-10px_rgba(30,58,138,0.12)] ring-1 ring-blue-950/[0.03]">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
+            <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-blue-100 bg-blue-50/80">
-                  <th className="whitespace-nowrap px-3 py-3 text-xs font-semibold uppercase tracking-wide text-blue-800">
-                    Code
-                  </th>
                   <th className="whitespace-nowrap px-3 py-3 text-xs font-semibold uppercase tracking-wide text-blue-800">
                     Series
                   </th>
@@ -252,9 +249,6 @@ export function BrowseStock() {
               <tbody className="divide-y divide-blue-50">
                 {items.map((item) => (
                   <tr key={item.id} className="transition hover:bg-sky-50/50">
-                    <td className="whitespace-nowrap px-3 py-2.5 font-mono font-semibold tabular-nums text-blue-950">
-                      {item.code}
-                    </td>
                     <td className="whitespace-nowrap px-3 py-2.5 font-mono font-semibold text-blue-950">
                       {item.series}
                     </td>

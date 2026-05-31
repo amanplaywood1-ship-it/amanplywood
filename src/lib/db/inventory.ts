@@ -12,7 +12,6 @@ export function rowToItem(row: InventoryItemRow): InventoryItem {
     id: row.id,
     name: row.name,
     serialNo: row.serial_no,
-    code: row.code,
     series: row.series,
     searchKey: row.search_key,
     opening: row.opening,
@@ -31,7 +30,6 @@ function insertToRow(data: InventoryItemInsert): Omit<InventoryItemRow, "id" | "
   return {
     name: data.name,
     serial_no: data.serialNo ?? null,
-    code: data.code,
     series: data.series,
     search_key: data.searchKey,
     opening: data.opening,

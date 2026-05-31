@@ -117,6 +117,17 @@ export function ImportPanel({ initialTotal }: Props) {
         Current database: <strong className="tabular-nums text-blue-950">{total}</strong> items
       </p>
 
+      <div className="rounded-xl border border-sky-200/80 bg-sky-50/60 px-4 py-3 text-sm text-blue-900">
+        <p className="font-semibold text-blue-950">Use your stock Excel template</p>
+        <p className="mt-1.5 text-xs leading-relaxed text-blue-800/90">
+          Keep the <strong>title rows</strong> and <strong>header row</strong> (S.NO, Series, OPENING, OUTWARD,
+          CLOSING, Search, Tag) as they are. Enter stock only in the rows below — add new rows for more items. Each
+          row needs <strong>Series</strong> filled with the full lookup value (e.g.{" "}
+          <code className="rounded bg-white px-1">2257FW</code>, <code className="rounded bg-white px-1">72*24</code>
+          ). Search → thickness/spec (e.g. .8mm). Tag → browse group (e.g. mica).
+        </p>
+      </div>
+
       <div className="space-y-4 rounded-2xl border border-blue-100/90 bg-white p-4 shadow-[0_4px_24px_-10px_rgba(30,58,138,0.12)] ring-1 ring-blue-950/[0.03] sm:p-6">
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-blue-950">Import mode</legend>
@@ -128,7 +139,7 @@ export function ImportPanel({ initialTotal }: Props) {
               checked={mode === "append"}
               onChange={() => setMode("append")}
             />
-            Append / update by code+series (safe for adding new rows)
+            Append / update by series (safe for adding new rows)
           </label>
           <label className="flex items-start gap-2 text-sm text-blue-800">
             <input

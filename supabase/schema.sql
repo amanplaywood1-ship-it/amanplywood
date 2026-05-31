@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS inventory_item (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   serial_no INTEGER,
-  code TEXT NOT NULL,
   series TEXT NOT NULL,
   search_key TEXT NOT NULL UNIQUE,
   opening INTEGER NOT NULL DEFAULT 0,
@@ -18,7 +17,7 @@ CREATE TABLE IF NOT EXISTS inventory_item (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_inventory_item_code ON inventory_item (code);
+CREATE INDEX IF NOT EXISTS idx_inventory_item_series ON inventory_item (series);
 CREATE INDEX IF NOT EXISTS idx_inventory_item_tag ON inventory_item (tag);
 CREATE INDEX IF NOT EXISTS idx_inventory_item_spec ON inventory_item (spec);
 CREATE INDEX IF NOT EXISTS idx_inventory_item_search_key ON inventory_item (search_key);
@@ -37,8 +36,6 @@ CREATE TRIGGER inventory_item_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION set_inventory_item_updated_at();
 
--- Optional: allow anon/authenticated access if you use the anon key on the client.
--- Server routes use the service role key and bypass RLS.
 ALTER TABLE inventory_item ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow public read inventory_item"

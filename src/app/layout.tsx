@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Aman Ply Wood Stock",
-  description: "Search inventory by code and series, add or sell stock",
+  description: "Search inventory by series, add or sell stock",
 };
 
 /** Tell the browser this UI is light-only so it does not use a dark page canvas. */

@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import type { ImportRow } from "./csvImport";
+import { resolveSeries, type ImportRow } from "./csvImport";
 import { parseIntSafe } from "./inventory";
 
 function norm(s: string): string {
@@ -12,6 +12,7 @@ function norm(s: string): string {
 
 type BlockCols = {
   serial: number;
+  /** -1 when the sheet has no CODE column (series-only template) */
   code: number;
   series: number;
   opening: number;
@@ -61,15 +62,11 @@ function sheetToMatrix(sheet: XLSX.WorkSheet): string[][] {
   return matrix;
 }
 
-function rowHasCodeAndSeriesHeaders(row: string[]): boolean {
-  let code = false;
-  let series = false;
+function rowHasSeriesHeaders(row: string[]): boolean {
   for (const cell of row) {
-    const n = norm(cell);
-    if (n === "code") code = true;
-    if (n === "series") series = true;
+    if (norm(cell) === "series") return true;
   }
-  return code && series;
+  return false;
 }
 
 function isSerialHeader(top: string, sub: string): boolean {
@@ -84,7 +81,7 @@ function classifyColumn(top: string, sub: string): "opening" | "outward" | "clos
   const t = norm(top);
   const u = norm(sub);
   if (t.includes("rack") || u.includes("rack")) return "rack";
-  if (t.includes("opening") || u.match(/^\d{1,2}\/\d{1,2}/) || t.match(/^\d{1,2}\/\d{1,2}/))
+  if (t.includes("opening") || u.match(/^\d{1,2}[\/\-]\d{1,2}/) || t.match(/^\d{1,2}[\/\-]\d{1,2}/))
     return "opening";
   if (t === "outward" || t === "current" || u === "outward" || u === "current") return "outward";
   if (t === "closing" || t === "remaining" || u === "closing" || u === "remaining") return "closing";
@@ -96,18 +93,14 @@ function identifyBlocksFromHeaderRow(row: string[], subRow?: string[]): BlockCol
   const width = row.length;
 
   for (let j = 0; j < width; j++) {
-    if (norm(row[j]) !== "code") continue;
+    if (norm(row[j]) !== "series") continue;
 
-    let seriesCol = -1;
-    for (let k = j + 1; k < Math.min(j + 6, width); k++) {
-      if (norm(row[k]) === "series") {
-        seriesCol = k;
-        break;
-      }
+    let codeCol = -1;
+    if (j > 0 && norm(row[j - 1]) === "code") {
+      codeCol = j - 1;
     }
-    if (seriesCol === -1) continue;
 
-    let serialCol = j - 1;
+    let serialCol = (codeCol >= 0 ? codeCol : j) - 1;
     if (serialCol < 0 || !isSerialHeader(row[serialCol] ?? "", subRow?.[serialCol] ?? "")) {
       serialCol = -1;
     }
@@ -119,8 +112,8 @@ function identifyBlocksFromHeaderRow(row: string[], subRow?: string[]): BlockCol
     let specCol: number | undefined;
     let tagCol: number | undefined;
 
-    const maxScan = Math.min(seriesCol + 18, width);
-    for (let c = seriesCol + 1; c < maxScan; c++) {
+    const maxScan = Math.min(j + 18, width);
+    for (let c = j + 1; c < maxScan; c++) {
       const top = row[c] ?? "";
       const sub = subRow?.[c] ?? "";
       const tn = norm(top);
@@ -140,14 +133,14 @@ function identifyBlocksFromHeaderRow(row: string[], subRow?: string[]): BlockCol
       else if (kind === "rack" && rackCol === undefined) rackCol = c;
     }
 
-    if (openingCol < 0) openingCol = seriesCol + 1;
+    if (openingCol < 0) openingCol = j + 1;
     if (outwardCol < 0) outwardCol = openingCol + 1;
     if (closingCol < 0) closingCol = outwardCol + 1;
 
     blocks.push({
       serial: serialCol,
-      code: j,
-      series: seriesCol,
+      code: codeCol,
+      series: j,
       opening: openingCol,
       outward: outwardCol,
       closing: closingCol,
@@ -163,7 +156,7 @@ function identifyBlocksFromHeaderRow(row: string[], subRow?: string[]): BlockCol
 }
 
 function guessSectionTitle(row: string[]): string | null {
-  if (rowHasCodeAndSeriesHeaders(row)) return null;
+  if (rowHasSeriesHeaders(row)) return null;
 
   const cells = row.filter((c) => String(c).trim() !== "");
   if (cells.length === 0) return null;
@@ -181,26 +174,37 @@ function guessSectionTitle(row: string[]): string | null {
   return null;
 }
 
+function isHeaderCell(value: string): boolean {
+  const n = norm(value);
+  return n === "code" || n === "series" || n === "sno" || n === "search" || n === "tag";
+}
+
 function extractBlocksFromDataRow(
   row: string[],
   blocks: BlockCols[],
   sectionName: string,
-  lastCodeByBlock: (string | null)[],
+  lastLegacyCodeByBlock: (string | null)[],
 ): ImportRow[] {
   const name = sectionName.trim() || "Stock";
   const out: ImportRow[] = [];
 
   for (let bi = 0; bi < blocks.length; bi++) {
     const b = blocks[bi];
-    let code = String(row[b.code] ?? "").trim();
-    if (!code && lastCodeByBlock[bi]) {
-      code = lastCodeByBlock[bi]!;
-    } else if (code) {
-      lastCodeByBlock[bi] = code;
+
+    let legacyCode = "";
+    if (b.code >= 0) {
+      legacyCode = String(row[b.code] ?? "").trim();
+      if (!legacyCode && lastLegacyCodeByBlock[bi]) {
+        legacyCode = lastLegacyCodeByBlock[bi]!;
+      } else if (legacyCode) {
+        lastLegacyCodeByBlock[bi] = legacyCode;
+      }
     }
 
-    const series = String(row[b.series] ?? "").trim();
-    if (!code || !series) continue;
+    const rawSeries = String(row[b.series] ?? "").trim();
+    const series = resolveSeries({ series: rawSeries, code: legacyCode });
+    if (!series) continue;
+    if (isHeaderCell(rawSeries) || (legacyCode && isHeaderCell(legacyCode))) continue;
 
     const opening = parseIntSafe(row[b.opening], 0);
     const outward = parseIntSafe(row[b.outward], 0);
@@ -209,8 +213,7 @@ function extractBlocksFromDataRow(
       closing = Math.max(0, opening - outward);
     }
 
-    const serialNo =
-      b.serial >= 0 ? parseIntSafe(row[b.serial], NaN) : NaN;
+    const serialNo = b.serial >= 0 ? parseIntSafe(row[b.serial], NaN) : NaN;
 
     const rackNo =
       b.rack !== undefined ? String(row[b.rack] ?? "").trim() || undefined : undefined;
@@ -221,7 +224,6 @@ function extractBlocksFromDataRow(
 
     out.push({
       name,
-      code,
       series,
       opening,
       outward,
@@ -236,32 +238,46 @@ function extractBlocksFromDataRow(
   return out;
 }
 
+function rowLooksLikeInventoryData(row: string[], headerRow: string[]): boolean {
+  let seriesCol = -1;
+  for (let j = 0; j < headerRow.length; j++) {
+    if (norm(headerRow[j]) === "series") {
+      seriesCol = j;
+      break;
+    }
+  }
+  if (seriesCol < 0) return false;
+  const series = String(row[seriesCol] ?? "").trim();
+  return series.length > 0;
+}
+
 function parseMatrix(matrix: string[][]): ImportRow[] {
   let sectionName = "";
   let blocks: BlockCols[] | null = null;
-  let lastCodeByBlock: (string | null)[] = [];
+  let lastLegacyCodeByBlock: (string | null)[] = [];
   const rows: ImportRow[] = [];
 
   for (let r = 0; r < matrix.length; r++) {
     const row = matrix[r] ?? [];
     if (!row.some((c) => String(c).trim() !== "")) continue;
 
-    if (rowHasCodeAndSeriesHeaders(row)) {
+    if (rowHasSeriesHeaders(row)) {
       const next = matrix[r + 1] ?? [];
-      const nextIsHeader = rowHasCodeAndSeriesHeaders(next);
+      const nextIsHeader = rowHasSeriesHeaders(next);
+      const nextIsData = rowLooksLikeInventoryData(next, row);
       const useSub =
-        !nextIsHeader && next.some((c) => String(c).trim() !== "")
+        !nextIsHeader && !nextIsData && next.some((c) => String(c).trim() !== "")
           ? next
           : undefined;
 
       blocks = identifyBlocksFromHeaderRow(row, useSub);
-      lastCodeByBlock = blocks.map(() => null);
+      lastLegacyCodeByBlock = blocks.map(() => null);
       if (useSub) r++;
       continue;
     }
 
     if (blocks && blocks.length > 0) {
-      const extracted = extractBlocksFromDataRow(row, blocks, sectionName, lastCodeByBlock);
+      const extracted = extractBlocksFromDataRow(row, blocks, sectionName, lastLegacyCodeByBlock);
       if (extracted.length > 0) {
         rows.push(...extracted);
         continue;
@@ -278,9 +294,14 @@ function parseMatrix(matrix: string[][]): ImportRow[] {
 }
 
 /**
- * Reads all worksheets of an .xlsx workbook shaped like your stock sheet:
- * section title row, then header (S.NO / CODE / SERIES / OPENING / OUTWARD or current / CLOSING or remaining),
- * possibly a second header row with dates under OPENING. Multiple side‑by‑side blocks on one row are supported.
+ * Reads .xlsx workbooks in the Aman Ply Wood stock template:
+ *
+ *   Row 1–2: Section title — do not delete
+ *   Row 3:   S.NO | Series | OPENING | OUTWARD | CLOSING | Search | Tag
+ *   Row 4+:  User data — one row per item
+ *
+ * Series holds the full lookup id (e.g. 2257FW, 72*24). Legacy sheets with a
+ * separate CODE column are still supported — code is folded into series on import.
  */
 export function parseInventoryXlsx(buffer: ArrayBuffer): ImportRow[] {
   const wb = XLSX.read(buffer, { type: "array", cellDates: true });

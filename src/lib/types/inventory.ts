@@ -2,7 +2,6 @@ export type InventoryItem = {
   id: string;
   name: string;
   serialNo: number | null;
-  code: string;
   series: string;
   searchKey: string;
   opening: number;
@@ -19,7 +18,6 @@ export type InventoryItem = {
 export type InventoryItemInsert = {
   name: string;
   serialNo?: number | null;
-  code: string;
   series: string;
   searchKey: string;
   opening: number;
@@ -35,7 +33,6 @@ export type InventoryItemRow = {
   id: string;
   name: string;
   serial_no: number | null;
-  code: string;
   series: string;
   search_key: string;
   opening: number;

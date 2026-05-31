@@ -1,5 +1,5 @@
 import { importInventoryRows } from "@/lib/db/inventory";
-import { parseInventoryCsv, rowsToInventoryData } from "@/lib/csvImport";
+import { parseInventoryCsv, resolveSeries, rowsToInventoryData } from "@/lib/csvImport";
 import { parseInventoryXlsx } from "@/lib/xlsxImport";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -65,8 +65,10 @@ async function handleImport(request: NextRequest) {
   if (Array.isArray(rowsPayload) && rowsPayload.length > 0 && typeof rowsPayload[0] === "object") {
     const normalized = (rowsPayload as Record<string, unknown>[]).map((r) => ({
       name: String(r.name ?? "").trim(),
-      code: String(r.code ?? "").trim(),
-      series: String(r.series ?? "").trim(),
+      series: resolveSeries({
+        series: String(r.series ?? "").trim(),
+        code: String(r.code ?? "").trim(),
+      }),
       opening: Number(r.opening) || 0,
       outward: Number(r.outward) || 0,
       closing: Number(r.closing) || 0,

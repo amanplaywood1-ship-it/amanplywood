@@ -1,4 +1,4 @@
-name,code,series,opening,outward,closing,search,tag,rack_no,serial_no
-FLUTED MARBLE / WOODEN,4016,FL,100,10,90,0.8MM,PVC,A1,1
-ULTRA GLOSS MARBLE,2257,FW,50,5,45,1MM,PVC,B2,2
-FOSSIL,3100,FS,30,0,30,0.8MM,PVC,C3,3
+name,series,opening,outward,closing,search,tag,rack_no,serial_no
+FLUTED MARBLE / WOODEN,4016FL,100,10,90,0.8MM,PVC,A1,1
+ULTRA GLOSS MARBLE,2257FW,50,5,45,1MM,PVC,B2,2
+FOSSIL,3100FS,30,0,30,0.8MM,PVC,C3,3

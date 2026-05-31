@@ -1,8 +1,6 @@
-/** Normalized key for lookup: e.g. "2257" + "FW" -> "2257FW" */
-export function makeSearchKey(code: string, series: string): string {
-  const c = code.replace(/\s+/g, "").trim();
-  const s = series.replace(/\s+/g, "").trim();
-  return `${c}${s}`.toUpperCase();
+/** Normalized lookup key from series only, e.g. "2257FW", "72*24" */
+export function makeSearchKey(series: string): string {
+  return series.replace(/\s+/g, "").toUpperCase();
 }
 
 export function normalizeQuery(input: string): string {
